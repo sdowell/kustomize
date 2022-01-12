@@ -31,3 +31,30 @@ func SetEntry(key, value, tag string) SetFn {
 		})
 	}
 }
+
+type Setter struct {
+	// SetScalarCallback will be invoked for each call to SetScalar
+	SetScalarCallback func(value string, node *yaml.RNode)
+	// SetEntryCallback will be invoked for each call to SetEntry
+	SetEntryCallback func(key, value, tag string, node *yaml.RNode)
+}
+
+func (s Setter) SetScalar(value string) SetFn {
+	origSetScalar := SetScalar(value)
+	return func(node *yaml.RNode) error {
+		if s.SetScalarCallback != nil {
+			s.SetScalarCallback(value, node)
+		}
+		return origSetScalar(node)
+	}
+}
+
+func (s Setter) SetEntry(key, value, tag string) SetFn {
+	origSetEntry := SetEntry(key, value, tag)
+	return func(node *yaml.RNode) error {
+		if s.SetEntryCallback != nil {
+			s.SetEntryCallback(key, value, tag, node)
+		}
+		return origSetEntry(node)
+	}
+}
